@@ -1,0 +1,27 @@
+{
+  "name": "zyntra",
+  "version": "1.0.0",
+  "description": "Zyntra - Discord music bot for Plex Media Server",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.18.0",
+    "axios": "^1.7.7",
+    "discord.js": "^14.16.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.0",
+    "ffmpeg-static": "^5.2.0",
+    "helmet": "^8.0.0",
+    "libsodium-wrappers": "^0.7.15",
+    "opusscript": "^0.1.1",
+    "sodium-native": "^4.1.1",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

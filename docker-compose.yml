@@ -1,0 +1,46 @@
+version: "3.9"
+services:
+  zyntra:
+    build: .
+    container_name: zyntra
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3333}:3333"
+    environment:
+      # ── Discord ──────────────────────────────
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}   # Optional: fast slash command registration
+      TEXT_PREFIX: "!"
+
+      # ── Plex Auth Method ─────────────────────
+      # Choose ONE of: token | oauth | path
+      PLEX_AUTH_METHOD: ${PLEX_AUTH_METHOD:-token}
+
+      # Token method (most common)
+      PLEX_URL: ${PLEX_URL:-http://192.168.1.100:32400}
+      PLEX_TOKEN: ${PLEX_TOKEN}
+
+      # OAuth method — leave PLEX_TOKEN empty, provide token via web UI
+      # PLEX_AUTH_METHOD: oauth
+
+      # Direct path method — mount your music library below
+      # PLEX_AUTH_METHOD: path
+      PLEX_MUSIC_PATH: /music
+
+      # ── Bot Settings ─────────────────────────
+      DEFAULT_VOLUME: "0.5"
+      WEB_PORT: "3333"
+      STATE_DIR: "/data"
+      ANTI_DUPLICATE: "true"
+      ANTI_DUPLICATE_MEMORY: "10"
+      WEB_PASSWORD: ${WEB_PASSWORD:-changeme}
+      DEBUG: "false"
+
+    # For direct path method: mount your Plex music folder read-only
+    volumes:
+      - /mnt/user/media/music:/music:ro
+      - /mnt/user/appdata/zyntra:/data
+
+    # Keep the bot on the same network as Plex
+    network_mode: bridge
