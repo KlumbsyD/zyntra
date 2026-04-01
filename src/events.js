@@ -7,7 +7,7 @@ async function loadEvents(client) {
   // Single 'ready' handler — starts presence AND restores queues
   client.once('ready', async () => {
     logger.info(`Logged in as ${client.user.tag}`);
-    client.presence.start();
+    client.presenceManager.start();
     await restoreQueues(client);
   });
 

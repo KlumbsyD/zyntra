@@ -4,6 +4,8 @@ const plex = require('./plex');
 const { GuildQueue } = require('./queue');
 const { canUseDJCommand, setDJRoleId, clearDJRole, getDJRoleId } = require('./roles');
 const { setAnnounceChannelId, clearAnnounceChannel, getAnnounceChannelId } = require('./announce');
+const db = require('./database');
+const { wrappedCommand, statsCommand } = require('./wrapped');
 const logger = require('./utils/logger');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -56,7 +58,7 @@ const commands = [
       if (error) return interaction.editReply(error);
       const results = await plex.search(query);
       if (!results.length) return interaction.editReply('❌ No results found for **' + query + '**');
-      const track = results[0];
+      const track = { ...results[0], requestedBy: { id: interaction.user.id, username: interaction.user.username } };
       const result = queue.addTrack(track);
       if (!result.added) return interaction.editReply('⚠️ ' + result.reason);
       if (!queue.playing) {
@@ -81,7 +83,7 @@ const commands = [
       if (error) return interaction.editReply(error);
       const results = await plex.search(query);
       if (!results.length) return interaction.editReply('❌ No results found for **' + query + '**');
-      const track = results[0];
+      const track = { ...results[0], requestedBy: { id: interaction.user.id, username: interaction.user.username } };
       queue.addTrack(track, true); // force=true bypasses duplicate check
       if (!queue.playing) {
         await queue.playNext();
@@ -433,6 +435,9 @@ const commands = [
     },
   },
 ];
+
+// Append wrapped and stats commands
+commands.push(wrappedCommand, statsCommand);
 
 async function loadCommands(client) {
   for (const cmd of commands) {

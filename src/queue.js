@@ -12,6 +12,7 @@ const plex = require('./plex');
 const logger = require('./utils/logger');
 const { saveState, clearGuildState } = require('./persistence');
 const { resolveAnnounceChannel } = require('./announce');
+const db = require('./database');
 
 // How many tracks back to remember for anti-duplicate checks
 const RECENT_TRACK_MEMORY = parseInt(process.env.ANTI_DUPLICATE_MEMORY || '10');
@@ -87,6 +88,16 @@ class GuildQueue {
       this.playing = true;
       this.resource = resource;
 
+      // Record play to history database
+      if (track.requestedBy) {
+        db.recordPlay({
+          guildId: this.guildId,
+          userId: track.requestedBy.id,
+          username: track.requestedBy.username,
+          track,
+        });
+      }
+
       // Track recently played for anti-duplicate
       this.recentlyPlayed.push(track.key);
       if (this.recentlyPlayed.length > RECENT_TRACK_MEMORY) {
@@ -94,7 +105,7 @@ class GuildQueue {
       }
 
       saveState(this.client);
-      this.client?.presence?.refresh();
+      this.client?.presenceManager?.refresh();
 
       // Post now-playing: prefer dedicated announce channel, fall back to command channel
       const announceChannel = this.client
@@ -116,7 +127,7 @@ class GuildQueue {
       this.currentTrack = null;
       this.playing = false;
       clearGuildState(this.guildId);
-      this.client?.presence?.refresh();
+      this.client?.presenceManager?.refresh();
       // Notify in announce channel or fallback text channel
       const announceChannel = this.client
         ? await resolveAnnounceChannel(this.client, this.guildId)
@@ -179,13 +190,13 @@ class GuildQueue {
     this.player.pause();
     this.playing = false;
     saveState(this.client);
-    this.client?.presence?.refresh();
+    this.client?.presenceManager?.refresh();
   }
 
   resume() {
     this.player.unpause();
     this.playing = true;
-    this.client?.presence?.refresh();
+    this.client?.presenceManager?.refresh();
   }
 
   setVolume(vol) {
@@ -213,7 +224,7 @@ class GuildQueue {
     this.playing = false;
     this.currentTrack = null;
     clearGuildState(this.guildId);
-    this.client?.presence?.refresh();
+    this.client?.presenceManager?.refresh();
   }
 
   getStatus() {

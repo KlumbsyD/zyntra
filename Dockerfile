@@ -7,7 +7,8 @@ RUN apk add --no-cache \
     make \
     g++ \
     libc6-compat \
-    libsodium-dev
+    libsodium-dev \
+    sqlite-dev
 
 WORKDIR /app
 

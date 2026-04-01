@@ -5,6 +5,7 @@ const { loadEvents } = require('./events');
 const { startWebServer } = require('../web/server');
 const { PresenceManager } = require('./presence');
 const { restoreQueues } = require('./persistence');
+const { openDatabase } = require('./database');
 const logger = require('./utils/logger');
 
 const client = new Client({
@@ -18,10 +19,11 @@ const client = new Client({
 
 client.commands = new Collection();
 client.queue = new Map(); // guildId -> GuildQueue
-client.presence = new PresenceManager(client);
+client.presenceManager = new PresenceManager(client);
 
 async function main() {
   logger.info('Starting Zyntra...');
+  openDatabase();
 
   await loadCommands(client);
   await loadEvents(client); // registers the 'ready' handler for presence + restore

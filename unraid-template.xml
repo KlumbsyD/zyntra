@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Zyntra</Name>
+  <Repository>ghcr.io/your-username/zyntra:latest</Repository>
+  <Registry>https://ghcr.io</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/your-username/zyntra</Support>
+  <Project/>
+  <Overview>Zyntra - Discord music bot that streams audio from your Plex Media Server into Discord voice channels. Supports slash commands, text commands (!play), and a web dashboard. All three Plex auth methods supported: token, OAuth, and direct file path.</Overview>
+  <Category>MediaServer: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:3333]/</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/nicehash/NiceHashQuickMiner/master/icons/nhqm_256.png</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Description>Discord bot for playing music from Plex in voice channels.</Description>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>3333</HostPort>
+        <ContainerPort>3333</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/media/music</HostDir>
+      <ContainerDir>/music</ContainerDir>
+      <Mode>ro</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Value/>
+      <Name>DISCORD_TOKEN</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value/>
+      <Name>DISCORD_CLIENT_ID</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value/>
+      <Name>DISCORD_GUILD_ID</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>token</Value>
+      <Name>PLEX_AUTH_METHOD</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>http://192.168.1.100:32400</Value>
+      <Name>PLEX_URL</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value/>
+      <Name>PLEX_TOKEN</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>/music</Value>
+      <Name>PLEX_MUSIC_PATH</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>!</Value>
+      <Name>TEXT_PREFIX</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>0.5</Value>
+      <Name>DEFAULT_VOLUME</Name>
+      <Mode/>
+    </Variable>
+  </Environment>
+  <Labels/>
+  <Config Name="Web Dashboard" Target="3333" Default="3333" Mode="tcp" Description="Web UI port" Type="Port" Display="always" Required="true" Mask="false">3333</Config>
+  <Config Name="App Data Path" Target="/data" Default="/mnt/user/appdata/zyntra" Mode="rw" Description="Stores queue state and DJ role settings (persists across restarts)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/zyntra</Config>
+  <Config Name="Discord Bot Token" Target="DISCORD_TOKEN" Default="" Mode="" Description="Your Discord bot token from the Developer Portal" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="Discord Client ID" Target="DISCORD_CLIENT_ID" Default="" Mode="" Description="Your Discord app's Client ID" Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="Discord Guild ID" Target="DISCORD_GUILD_ID" Default="" Mode="" Description="Optional: Your server ID for fast slash command registration" Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Plex Auth Method" Target="PLEX_AUTH_METHOD" Default="token" Mode="" Description="token | oauth | path" Type="Variable" Display="always" Required="true" Mask="false">token</Config>
+  <Config Name="Plex URL" Target="PLEX_URL" Default="http://192.168.1.100:32400" Mode="" Description="URL of your Plex server (token/oauth methods)" Type="Variable" Display="always" Required="false" Mask="false">http://192.168.1.100:32400</Config>
+  <Config Name="Plex Token" Target="PLEX_TOKEN" Default="" Mode="" Description="Your Plex token (token method only)" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Music Path (in container)" Target="PLEX_MUSIC_PATH" Default="/music" Mode="" Description="Path for direct-file method" Type="Variable" Display="always" Required="false" Mask="false">/music</Config>
+  <Config Name="Music Library Host Path" Target="/music" Default="/mnt/user/media/music" Mode="ro" Description="Host path to your music files (for direct path method)" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/media/music</Config>
+  <Config Name="Dashboard Password" Target="WEB_PASSWORD" Default="" Mode="" Description="Password to protect the web dashboard. Leave empty to disable auth (not recommended on shared networks)." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Text Prefix" Target="TEXT_PREFIX" Default="!" Mode="" Description="Prefix for text commands" Type="Variable" Display="advanced" Required="false" Mask="false">!</Config>
+  <Config Name="Default Volume" Target="DEFAULT_VOLUME" Default="0.5" Mode="" Description="Default volume 0.0–1.0" Type="Variable" Display="advanced" Required="false" Mask="false">0.5</Config>
+  <Config Name="Anti-Duplicate" Target="ANTI_DUPLICATE" Default="true" Mode="" Description="Block recently played tracks from being re-queued (true/false)" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="Anti-Duplicate Memory" Target="ANTI_DUPLICATE_MEMORY" Default="10" Mode="" Description="How many recently played tracks to remember for duplicate checking" Type="Variable" Display="advanced" Required="false" Mask="false">10</Config>
+  <Config Name="State Directory" Target="STATE_DIR" Default="/data" Mode="" Description="Internal path for queue/role persistence (match your App Data Path mount)" Type="Variable" Display="advanced" Required="false" Mask="false">/data</Config>
+</Container>
