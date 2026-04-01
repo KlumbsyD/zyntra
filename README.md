@@ -50,7 +50,7 @@ Go to **Docker** tab → **Add Container** and fill in:
 
 | Field | Value |
 |---|---|
-| Repository | `ghcr.io/your-username/zyntra:latest` |
+| Repository | `ghcr.io/klumbsyd/zyntra:latest` |
 | Port | `3333:3333` |
 | Path | `/mnt/user/media/music` → `/music` (ro) — only needed for path method |
 
@@ -68,7 +68,7 @@ PLEX_TOKEN             = your-plex-token
 #### Option B: Build Locally on UnRAID
 
 1. SSH into your UnRAID server
-2. Clone this repo: `git clone https://github.com/your-username/zyntra /mnt/user/appdata/zyntra`
+2. Clone this repo: `git clone https://github.com/klumbsyd/zyntra /mnt/user/appdata/zyntra`
 3. `cd /mnt/user/appdata/zyntra`
 4. Copy the env file: `cp .env.example .env` and fill it in
 5. Build and run: `docker compose up -d`

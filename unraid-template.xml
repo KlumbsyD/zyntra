@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>Zyntra</Name>
-  <Repository>ghcr.io/your-username/zyntra:latest</Repository>
+  <Repository>ghcr.io/klumbsyd/zyntra:latest</Repository>
   <Registry>https://ghcr.io</Registry>
   <Network>bridge</Network>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/your-username/zyntra</Support>
+  <Support>https://github.com/klumbsyd/zyntra</Support>
   <Project/>
   <Overview>Zyntra - Discord music bot that streams audio from your Plex Media Server into Discord voice channels. Supports slash commands, text commands (!play), and a web dashboard. All three Plex auth methods supported: token, OAuth, and direct file path.</Overview>
   <Category>MediaServer: Tools:</Category>
