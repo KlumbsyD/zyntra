@@ -1,13 +1,20 @@
+const { PresenceManager } = require('./presence');
 const { restoreQueues } = require('./persistence');
 const logger = require('./utils/logger');
 
 const PREFIX = process.env.TEXT_PREFIX || '!';
 
 async function loadEvents(client) {
-  // Single 'ready' handler — starts presence AND restores queues
+  // Single 'ready' handler — creates PresenceManager AFTER login,
+  // then starts presence and restores queues
   client.once('ready', async () => {
     logger.info(`Logged in as ${client.user.tag}`);
+
+    // Safe to create PresenceManager now — discord.js has finished
+    // setting up its own client.presence internals during login
+    client.presenceManager = new PresenceManager(client);
     client.presenceManager.start();
+
     await restoreQueues(client);
   });
 
@@ -62,13 +69,11 @@ function makeFakeInteraction(message, commandName, query) {
     channel: message.channel,
     member: message.member,
     user: message.author,
-    // Stub commandName so DJ role check works
     commandName,
     deferred: false,
     options: {
       getString: (_name) => query || null,
       getInteger: (_name) => { const n = parseInt(query); return isNaN(n) ? null : n; },
-      // Subcommands not supported via text prefix - return null safely
       getSubcommand: () => null,
       getRole: () => null,
       getChannel: () => null,

@@ -3,7 +3,6 @@ const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord
 const { loadCommands } = require('./commands');
 const { loadEvents } = require('./events');
 const { startWebServer } = require('../web/server');
-const { PresenceManager } = require('./presence');
 const { restoreQueues } = require('./persistence');
 const { openDatabase } = require('./database');
 const logger = require('./utils/logger');
@@ -19,14 +18,15 @@ const client = new Client({
 
 client.commands = new Collection();
 client.queue = new Map(); // guildId -> GuildQueue
-client.presenceManager = new PresenceManager(client);
+// PresenceManager is created inside the ready event in events.js
+// to avoid conflicting with discord.js's own client.presence internals
 
 async function main() {
   logger.info('Starting Zyntra...');
   openDatabase();
 
   await loadCommands(client);
-  await loadEvents(client); // registers the 'ready' handler for presence + restore
+  await loadEvents(client);
 
   // Register slash commands with Discord
   if (process.env.DISCORD_GUILD_ID) {

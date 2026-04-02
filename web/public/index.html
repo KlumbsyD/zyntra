@@ -354,79 +354,22 @@ function esc(s) {
 }
 
 
-let sessionToken = localStorage.getItem('zyntra_token') || '';
-
-async function checkAuth() {
-  const res = await fetch('/api/auth-required');
-  const data = await res.json();
-  if (!data.required) return; // no password set, proceed normally
-  // Try existing token
-  if (sessionToken) {
-    const test = await fetch('/api/status', { headers: { 'x-session-token': sessionToken } });
-    if (test.ok) return; // token still valid
-  }
-  // Show login overlay
-  document.getElementById('login-overlay').style.display = 'flex';
-  document.getElementById('pw-input').focus();
-}
-
-async function doLogin() {
-  const pw = document.getElementById('pw-input').value;
-  document.getElementById('pw-error').textContent = '';
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      document.getElementById('pw-error').textContent = data.error || 'Login failed';
-      return;
-    }
-    sessionToken = data.token;
-    localStorage.setItem('zyntra_token', sessionToken);
-    document.getElementById('login-overlay').style.display = 'none';
-  } catch {
-    document.getElementById('pw-error').textContent = 'Connection error';
-  }
-}
-
-function authHeaders() {
-  return sessionToken ? { 'x-session-token': sessionToken } : {};
-}
-
-// Override fetch to attach auth header automatically
+// Attach session token from sessionStorage to all API requests
+const _zyntraToken = sessionStorage.getItem('zyntra_token') || '';
 const _origFetch = window.fetch;
 window.fetch = (url, opts = {}) => {
-  if (typeof url === 'string' && url.startsWith('/api/')) {
-    opts.headers = { ...authHeaders(), ...(opts.headers || {}) };
+  if (typeof url === 'string' && url.startsWith('/api/') && _zyntraToken) {
+    opts.headers = { 'x-session-token': _zyntraToken, ...(opts.headers || {}) };
   }
   return _origFetch(url, opts);
 };
 
 // Init
-checkAuth().then(() => {
-  fetchStatus();
-  fetchPlexStatus();
-  loadPlaylists();
-  refreshInterval = setInterval(fetchStatus, 5000);
-});
+fetchStatus();
+fetchPlexStatus();
+loadPlaylists();
+refreshInterval = setInterval(fetchStatus, 5000);
 </script>
-
-<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;display:flex;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:340px;text-align:center;">
-    <div style="font-size:2rem;margin-bottom:0.5rem;">🎵</div>
-    <div style="font-size:1.3rem;font-weight:600;margin-bottom:0.25rem;">Zyntra</div>
-    <div style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;">Enter the dashboard password</div>
-    <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password"
-      style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
-      padding:10px 14px;border-radius:8px;font-family:inherit;font-size:0.95rem;outline:none;margin-bottom:0.75rem;"
-      onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()" class="btn primary" style="width:100%;justify-content:center;padding:10px;">Unlock</button>
-    <div id="pw-error" style="color:var(--red);font-size:0.8rem;margin-top:0.75rem;min-height:1.2em;"></div>
-  </div>
-</div>
 
 </body>
 </html>
