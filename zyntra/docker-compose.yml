@@ -1,0 +1,50 @@
+services:
+  zyntra:
+    build: .
+    container_name: zyntra
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3333}:3333"
+    environment:
+      # ── Discord ──────────────────────────────────────────────────────────
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      # DISCORD_GUILD_ID is no longer needed — commands register automatically
+      TEXT_PREFIX: "!"
+
+      # ── Plex ─────────────────────────────────────────────────────────────
+      # IMPORTANT: Use 172.17.0.1 (Docker bridge gateway), not your LAN IP
+      # Using your LAN IP from inside a bridge container causes Plex 500 errors
+      PLEX_AUTH_METHOD: ${PLEX_AUTH_METHOD:-token}
+      PLEX_URL: ${PLEX_URL:-http://172.17.0.1:32400}
+      PLEX_TOKEN: ${PLEX_TOKEN}
+      PLEX_MUSIC_PATH: /music
+
+      # ── Bot Settings ─────────────────────────────────────────────────────
+      DEFAULT_VOLUME: "0.5"
+      WEB_PORT: "3333"
+      STATE_DIR: "/data"
+      WEB_PASSWORD: ${WEB_PASSWORD:-changeme}
+      ANTI_DUPLICATE: "true"
+      ANTI_DUPLICATE_MEMORY: "10"
+      COMMUNITY_PLAYLIST_THRESHOLD: ${COMMUNITY_PLAYLIST_THRESHOLD:-3}
+
+      # ── Lidarr Integration (optional) ────────────────────────────────────
+      LIDARR_URL: ${LIDARR_URL:-}
+      LIDARR_API_KEY: ${LIDARR_API_KEY:-}
+      LIDARR_ROOT_FOLDER: ${LIDARR_ROOT_FOLDER:-/data}
+
+      # ── Timezone (for /wrapped stats) ────────────────────────────────────
+      # Use IANA names e.g. America/New_York, America/Chicago, Europe/London
+      TIMEZONE: ${TIMEZONE:-UTC}
+
+      DEBUG: "false"
+
+    volumes:
+      # Persistent data — database, queue state, DJ roles, community playlist mappings
+      - /mnt/user/appdata/zyntra/data:/data
+      # Music library — only needed for PLEX_AUTH_METHOD=path
+      - /mnt/user/media/music:/music:ro
+
+    # Bridge mode is required — host mode blocks Discord UDP voice traffic on UnRAID
+    network_mode: bridge

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zyntra</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --surface2: #1e2230;
+    --border: #2a2f42;
+    --plex: #e5a00d;
+    --plex-dim: #b07d0a;
+    --discord: #5865f2;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --green: #3dd68c;
+    --red: #f04747;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 600; }
+  .logo span { color: var(--plex); }
+  .status-row { display: flex; gap: 12px; }
+  .badge {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.off { background: var(--red); }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .card h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1rem; }
+
+  /* Now Playing */
+  .np-track { font-size: 1.25rem; font-weight: 600; margin-bottom: 4px; }
+  .np-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.2rem; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; font-family: inherit; font-size: 0.85rem;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--border); }
+  .btn.primary { background: var(--plex); border-color: var(--plex); color: #000; font-weight: 600; }
+  .btn.primary:hover { background: var(--plex-dim); }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: rgba(240,71,71,0.1); }
+
+  /* Volume */
+  .vol-row { display: flex; align-items: center; gap: 12px; margin-top: 1rem; }
+  .vol-row span { color: var(--muted); font-size: 0.85rem; width: 34px; text-align: right; }
+  input[type=range] {
+    flex: 1; -webkit-appearance: none; height: 4px;
+    background: var(--border); border-radius: 2px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--plex); cursor: pointer;
+  }
+
+  /* Queue */
+  .queue-list { list-style: none; }
+  .queue-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    font-size: 0.875rem; transition: background 0.1s;
+  }
+  .queue-item:hover { background: var(--surface2); }
+  .qi-num { color: var(--muted); width: 20px; text-align: right; font-size: 0.75rem; }
+  .qi-title { flex: 1; font-weight: 500; }
+  .qi-artist { color: var(--muted); font-size: 0.8rem; }
+  .qi-dur { color: var(--muted); font-size: 0.75rem; }
+
+  /* Search */
+  .search-bar {
+    display: flex; gap: 8px; margin-bottom: 1rem;
+  }
+  .search-bar input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 14px; border-radius: 8px;
+    font-family: inherit; font-size: 0.9rem; outline: none;
+  }
+  .search-bar input:focus { border-color: var(--plex); }
+  .result-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-radius: 8px; font-size: 0.875rem; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .result-item:hover { background: var(--surface2); }
+  .result-meta { color: var(--muted); font-size: 0.8rem; }
+
+  /* No guild msg */
+  .empty { text-align: center; color: var(--muted); padding: 3rem; }
+  .empty h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
+
+  /* Playlists */
+  .playlist-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 20px; font-size: 0.8rem;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--plex); color: var(--plex); }
+
+  .loop-btns { display: flex; gap: 6px; }
+  .loop-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); padding: 5px 12px; border-radius: 6px;
+    cursor: pointer; font-size: 0.8rem; transition: all 0.15s; font-family: inherit;
+  }
+  .loop-btn.active { border-color: var(--plex); color: var(--plex); }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎵 <span>Zyntra</span></div>
+  <div class="status-row">
+    <div class="badge"><div class="dot" id="bot-dot"></div><span id="bot-label">Bot: —</span></div>
+    <div class="badge"><div class="dot" id="plex-dot"></div><span id="plex-label">Plex: —</span></div>
+  </div>
+</header>
+
+<main>
+  <div id="no-guild" class="empty" style="display:none">
+    <h3>No active voice sessions</h3>
+    <p>Join a voice channel and use <code>/play</code> or <code>!play</code> to start playing music.</p>
+  </div>
+
+  <div id="guild-ui" style="display:none">
+    <div class="grid">
+      <!-- Left column -->
+      <div>
+        <!-- Now Playing -->
+        <div class="card">
+          <h2>Now Playing</h2>
+          <div class="np-track" id="np-title">—</div>
+          <div class="np-meta" id="np-meta">—</div>
+          <div class="controls">
+            <button class="btn primary" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
+            <button class="btn" onclick="api('skip')">⏭ Skip</button>
+            <button class="btn" onclick="api('shuffle')">🔀 Shuffle</button>
+            <button class="btn danger" onclick="api('stop')">⏹ Stop</button>
+          </div>
+          <div class="vol-row">
+            <span>🔊</span>
+            <input type="range" min="0" max="100" value="50" id="vol-slider" oninput="setVolume(this.value)">
+            <span id="vol-label">50%</span>
+          </div>
+          <div class="loop-btns" style="margin-top:12px">
+            <button class="loop-btn" id="loop-off" onclick="setLoop('off')">➡ Off</button>
+            <button class="loop-btn" id="loop-track" onclick="setLoop('track')">🔂 Track</button>
+            <button class="loop-btn" id="loop-queue" onclick="setLoop('queue')">🔁 Queue</button>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="card">
+          <h2>Search Plex</h2>
+          <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search tracks, artists, albums…" onkeydown="if(event.key==='Enter')doSearch()">
+            <button class="btn primary" onclick="doSearch()">Search</button>
+          </div>
+          <div id="search-results"></div>
+        </div>
+
+        <!-- Playlists -->
+        <div class="card">
+          <h2>Playlists</h2>
+          <div class="playlist-chips" id="playlists-list"><span style="color:var(--muted);font-size:.85rem">Loading…</span></div>
+        </div>
+      </div>
+
+      <!-- Right column: Queue -->
+      <div>
+        <div class="card" style="position:sticky;top:1rem">
+          <h2>Queue (<span id="queue-count">0</span>)</h2>
+          <ul class="queue-list" id="queue-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let currentGuildId = null;
+let isPaused = false;
+let refreshInterval;
+
+async function fetchStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    document.getElementById('bot-dot').className = 'dot ' + (data.botReady ? 'on' : 'off');
+    document.getElementById('bot-label').textContent = 'Bot: ' + (data.botTag || 'Offline');
+    if (data.guilds.length > 0) {
+      const guild = data.guilds[0];
+      currentGuildId = guild.guildId;
+      document.getElementById('no-guild').style.display = 'none';
+      document.getElementById('guild-ui').style.display = '';
+      renderGuild(guild);
+    } else {
+      document.getElementById('no-guild').style.display = '';
+      document.getElementById('guild-ui').style.display = 'none';
+    }
+  } catch {}
+}
+
+async function fetchPlexStatus() {
+  try {
+    const res = await fetch('/api/plex/status');
+    const data = await res.json();
+    document.getElementById('plex-dot').className = 'dot ' + (data.connected ? 'on' : 'off');
+    document.getElementById('plex-label').textContent = `Plex: ${data.connected ? data.method : 'Offline'}`;
+  } catch {}
+}
+
+function renderGuild(guild) {
+  const t = guild.currentTrack;
+  document.getElementById('np-title').textContent = t ? t.title : '— Nothing playing —';
+  document.getElementById('np-meta').textContent = t ? `${t.artist} • ${t.album}` : '';
+  isPaused = guild.playerStatus === 'paused';
+  document.getElementById('btn-pause').textContent = isPaused ? '▶️ Resume' : '⏸ Pause';
+  const vol = Math.round(guild.volume * 100);
+  document.getElementById('vol-slider').value = vol;
+  document.getElementById('vol-label').textContent = vol + '%';
+
+  // Loop
+  document.querySelectorAll('.loop-btn').forEach(b => b.classList.remove('active'));
+  if (guild.loop) document.getElementById('loop-track').classList.add('active');
+  else if (guild.loopQueue) document.getElementById('loop-queue').classList.add('active');
+  else document.getElementById('loop-off').classList.add('active');
+
+  // Queue
+  const qList = document.getElementById('queue-list');
+  document.getElementById('queue-count').textContent = guild.queue.length;
+  if (!guild.queue.length) {
+    qList.innerHTML = '<li style="color:var(--muted);font-size:.85rem;padding:8px 10px">No upcoming tracks</li>';
+    return;
+  }
+  qList.innerHTML = guild.queue.slice(0, 30).map((t, i) => `
+    <li class="queue-item">
+      <span class="qi-num">${i + 1}</span>
+      <div style="flex:1;min-width:0">
+        <div class="qi-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+        <div class="qi-artist">${esc(t.artist)}</div>
+      </div>
+      <span class="qi-dur">${fmtDur(t.duration)}</span>
+    </li>`).join('');
+}
+
+async function api(action, body) {
+  if (!currentGuildId) return;
+  await fetch(`/api/guild/${currentGuildId}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  setTimeout(fetchStatus, 300);
+}
+
+function togglePause() {
+  api(isPaused ? 'resume' : 'pause');
+}
+
+let volTimer;
+function setVolume(v) {
+  document.getElementById('vol-label').textContent = v + '%';
+  clearTimeout(volTimer);
+  volTimer = setTimeout(() => api('volume', { volume: parseInt(v) }), 300);
+}
+
+function setLoop(mode) {
+  api('loop', { mode });
+}
+
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  document.getElementById('search-results').innerHTML = '<div style="color:var(--muted);font-size:.85rem">Searching…</div>';
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const results = await res.json();
+    if (!results.length) {
+      document.getElementById('search-results').innerHTML = '<div style="color:var(--muted);font-size:.85rem">No results found.</div>';
+      return;
+    }
+    document.getElementById('search-results').innerHTML = results.map((t, i) => `
+      <div class="result-item" onclick="addToQueue('${esc(JSON.stringify(t).replace(/'/g,"&apos;"))}')">
+        <div>
+          <div style="font-weight:500">${esc(t.title)}</div>
+          <div class="result-meta">${esc(t.artist)} • ${esc(t.album)}</div>
+        </div>
+        <span style="color:var(--muted);font-size:.75rem">${fmtDur(t.duration)}</span>
+      </div>`).join('');
+  } catch {
+    document.getElementById('search-results').innerHTML = '<div style="color:var(--red);font-size:.85rem">Search failed.</div>';
+  }
+}
+
+async function loadPlaylists() {
+  const res = await fetch('/api/playlists');
+  const playlists = await res.json();
+  const el = document.getElementById('playlists-list');
+  if (!playlists.length) { el.innerHTML = '<span style="color:var(--muted);font-size:.85rem">No playlists found</span>'; return; }
+  el.innerHTML = playlists.map(p =>
+    `<div class="chip" onclick="playPlaylist('${esc(p.key)}','${esc(p.title)}')">${esc(p.title)} <span style="color:var(--muted)">(${p.count})</span></div>`
+  ).join('');
+}
+
+async function addToQueue(trackJson) {
+  // This queues a track via the bot — for now just shows an alert with the command
+  const t = JSON.parse(trackJson.replace(/&apos;/g, "'"));
+  alert(`To queue this track in Discord, type:\n!play ${t.title}\nor\n/play ${t.title}`);
+}
+
+async function playPlaylist(key, title) {
+  alert(`To play this playlist in Discord, type:\n!playlist ${title}\nor\n/playlist ${title}`);
+}
+
+function fmtDur(sec) {
+  if (!sec) return '?:??';
+  return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// Token auth — extract from URL hash if present, otherwise use sessionStorage
+let _zyntraToken = '';
+if (window.location.hash.startsWith('#token=')) {
+  _zyntraToken = window.location.hash.slice(7);
+  sessionStorage.setItem('zyntra_token', _zyntraToken);
+  // Clean the token from URL bar
+  history.replaceState(null, '', '/');
+} else {
+  _zyntraToken = sessionStorage.getItem('zyntra_token') || '';
+}
+
+const _origFetch = window.fetch;
+window.fetch = (url, opts = {}) => {
+  if (typeof url === 'string' && url.startsWith('/api/')) {
+    if (_zyntraToken) {
+      opts.headers = { 'x-session-token': _zyntraToken, ...(opts.headers || {}) };
+    }
+  }
+  return _origFetch(url, opts).then(res => {
+    if (res.status === 401 && url.startsWith('/api/')) {
+      sessionStorage.removeItem('zyntra_token');
+      window.location.href = '/login';
+    }
+    return res;
+  });
+};
+
+// Init
+fetchStatus();
+fetchPlexStatus();
+loadPlaylists();
+refreshInterval = setInterval(fetchStatus, 5000);
+</script>
+
+</body>
+</html>

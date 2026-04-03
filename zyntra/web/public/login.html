@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zyntra — Login</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+  :root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --border: #2a2f42;
+    --plex: #e5a00d;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --red: #f04747;
+    --green: #3dd68c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: 340px;
+    text-align: center;
+  }
+  .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  h1 { font-size: 1.5rem; font-weight: 600; color: var(--plex); margin-bottom: 0.25rem; }
+  .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.75rem; }
+  input {
+    width: 100%;
+    background: #1e2230;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--plex); }
+  button {
+    width: 100%;
+    background: var(--plex);
+    border: none;
+    color: #000;
+    padding: 11px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #b07d0a; }
+  .error {
+    color: var(--red);
+    font-size: 0.82rem;
+    margin-top: 0.75rem;
+    min-height: 1.2em;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">🎵</div>
+  <h1>Zyntra</h1>
+  <div class="sub">Enter your dashboard password</div>
+  <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+  <button id="btn">Unlock</button>
+  <div class="error" id="err"></div>
+</div>
+<script>
+  async function doLogin() {
+    const pw = document.getElementById('pw').value;
+    const err = document.getElementById('err');
+    const btn = document.getElementById('btn');
+    err.textContent = '';
+    if (!pw) { err.textContent = 'Please enter a password'; return; }
+    btn.textContent = 'Unlocking...';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        err.textContent = data.error || 'Incorrect password';
+        btn.textContent = 'Unlock';
+        btn.disabled = false;
+        return;
+      }
+      // Pass token via URL hash — hash never sent to server, stays client-side
+      window.location.href = '/#token=' + data.token;
+    } catch (e) {
+      err.textContent = 'Connection error';
+      btn.textContent = 'Unlock';
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('btn').addEventListener('click', doLogin);
+  document.getElementById('pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('pw').focus();
+</script>
+</body>
+</html>
