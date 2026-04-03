@@ -63,9 +63,10 @@ A Docker container that streams music from your **Plex Media Server** into Disco
 2. Enable the following permissions:
    - `Connect` — join voice channels
    - `Speak` — play audio in voice channels
-   - `Send Messages` — post now-playing embeds
+   - `Send Messages` — post now-playing embeds and command responses
+   - `Embed Links` — required to display now-playing cards
    - `Read Message History` — needed to fetch reactions on older messages
-   - `Add Reactions` — optional, for future features
+   - `Add Reactions` — seeds the 👍 reaction on now-playing messages for community playlist voting
    - `Use Slash Commands` — register and use slash commands
 
 #### 1.4 Generate the invite URL
@@ -323,6 +324,8 @@ When a now-playing message receives enough 👍 reactions from unique users, Zyn
 
 > **Required:** The **Server Members Intent** and **Message Content Intent** must be enabled in the Discord Developer Portal under Bot → Privileged Gateway Intents.
 
+> **Channel permissions:** Zyntra must have **View Channel**, **Send Messages**, **Embed Links**, and **Add Reactions** permissions in whichever channel it posts to. If you set an announce channel with `/announce set`, grant these permissions there. If you do not set an announce channel, Zyntra posts to the channel where `/play` was used — make sure it has permissions there too. If the now-playing message is not appearing, this is almost always the cause.
+
 ---
 
 ## 🎁 Zyntra Wrapped
@@ -429,6 +432,13 @@ Do not use `--network host` for Zyntra and do not use your LAN IP in `PLEX_URL`.
 **`/wrapped` or `/stats` shows no data:**
 - These rely on SQLite in `/data/zyntra.db` — ensure the `/data` volume is mounted correctly
 - Data is only recorded from tracks played after the first run
+
+**Now-playing message not appearing / community playlist voting not working:**
+- Zyntra needs **View Channel**, **Send Messages**, **Embed Links**, and **Add Reactions** permissions in the channel it posts to
+- If you have set an announce channel with `/announce set`, check permissions there
+- If no announce channel is set, Zyntra posts to the channel where `/play` was used — check permissions there
+- In Discord: right-click the channel → Edit Channel → Permissions → add Zyntra and enable the above permissions
+- Check the logs for confirmation: `docker logs zyntra | grep "Now playing send failed"`
 
 **Dashboard login not working:**
 - Ensure `WEB_PASSWORD` is set in your `.env`

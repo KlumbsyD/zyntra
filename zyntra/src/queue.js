@@ -89,19 +89,23 @@ class GuildQueue {
           inlineVolume: true,
         });
       } else {
-        // Download the full file to a temp location before playing
-        // This prevents Plex stream throttling causing audio cutouts
         const fs = require('fs');
         const os = require('os');
+        const path = require('path');
+        const { spawn } = require('child_process');
+
+        // Detect source format from URL
         const ext = streamUrl.includes('.flac') ? '.flac' :
                     streamUrl.includes('.mp3') ? '.mp3' :
                     streamUrl.includes('.m4a') ? '.m4a' : '.audio';
-        const tmpFile = require('path').join(os.tmpdir(), 'zyntra-' + Date.now() + ext);
+        const tmpSrc  = path.join(os.tmpdir(), 'zyntra-src-' + Date.now() + ext);
+        const tmpOpus = path.join(os.tmpdir(), 'zyntra-' + Date.now() + '.opus');
 
+        // Step 1: Download the full file from Plex
         await new Promise((resolve, reject) => {
           const urlObj = new URL(streamUrl);
           const httpModule = urlObj.protocol === 'https:' ? require('https') : require('http');
-          const fileStream = fs.createWriteStream(tmpFile);
+          const fileStream = fs.createWriteStream(tmpSrc);
           const req = httpModule.get(streamUrl, {
             headers: {
               'Accept': '*/*',
@@ -115,10 +119,7 @@ class GuildQueue {
               return;
             }
             res.pipe(fileStream);
-            fileStream.on('finish', () => {
-  
-              resolve();
-            });
+            fileStream.on('finish', resolve);
             fileStream.on('error', reject);
           });
           req.on('error', (err) => {
@@ -127,11 +128,33 @@ class GuildQueue {
           });
         });
 
-        // Store temp file path so we can delete it after playback
-        this._tmpFile = tmpFile;
+        // Step 2: Transcode to Opus using ffmpeg
+        // Opus is Discord's native format — this eliminates all real-time decode pressure
+        await new Promise((resolve, reject) => {
+          const ff = spawn('ffmpeg', [
+            '-i', tmpSrc,
+            '-c:a', 'libopus',   // encode to Opus
+            '-b:a', '128k',      // 128kbps — good quality, small file
+            '-vbr', 'on',        // variable bitrate for efficiency
+            '-ar', '48000',      // Discord requires 48kHz
+            '-ac', '2',          // stereo
+            '-f', 'opus',
+            '-y',                // overwrite if exists
+            tmpOpus,
+          ]);
+          ff.on('close', (code) => {
+            fs.unlink(tmpSrc, () => {}); // clean up source file immediately
+            if (code === 0) resolve();
+            else reject(new Error('ffmpeg transcode failed with code ' + code));
+          });
+          ff.on('error', reject);
+        });
 
-        resource = createAudioResource(tmpFile, {
-          inputType: StreamType.Arbitrary,
+        // Store transcoded file path for cleanup after playback
+        this._tmpFile = tmpOpus;
+
+        resource = createAudioResource(tmpOpus, {
+          inputType: StreamType.OggOpus,  // tell @discordjs/voice it's already Opus
           inlineVolume: true,
         });
       }
@@ -166,7 +189,11 @@ class GuildQueue {
         ? await resolveAnnounceChannel(this.client, this.guildId)
         : null;
       const target = announceChannel || this.textChannel;
-      if (target) target.send({ embeds: [this._nowPlayingEmbed(track)] }).catch(() => {});
+      if (target) {
+        target.send({ embeds: [this._nowPlayingEmbed(track)] })
+          .then(msg => msg.react('👍').catch(() => {}))
+          .catch(e => logger.error('Now playing send failed (check bot permissions in channel ' + target.id + '):', e.message));
+      }
     } catch (err) {
       logger.error('Error playing track:', err);
       if (this.textChannel) {
@@ -319,7 +346,7 @@ class GuildQueue {
         { name: 'Duration', value: duration, inline: true },
       ],
       thumbnail: track.thumb ? { url: plex.getAuthenticatedThumbUrl(track.thumb) } : undefined,
-      footer: { text: 'Queue: ' + this.tracks.length + ' track(s) remaining' },
+      footer: { text: '👍 React to vote into the community playlist  •  Queue: ' + this.tracks.length + ' track(s) remaining' },
     };
   }
 }

@@ -27,7 +27,11 @@ function getOrCreateQueue(client, interaction, member) {
     const q = new GuildQueue(guild.id, connection, interaction.channel, client);
     client.queue.set(guild.id, q);
   }
-  return { queue: client.queue.get(guild.id) };
+  // Always update the text channel to wherever the command was just used
+  // so now-playing messages go to the right place
+  const queue = client.queue.get(guild.id);
+  if (interaction.channel) queue.textChannel = interaction.channel;
+  return { queue };
 }
 
 function formatDuration(sec) {
