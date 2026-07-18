@@ -33,7 +33,9 @@ services:
       STATE_DIR: "/data"
       ANTI_DUPLICATE: "true"
       ANTI_DUPLICATE_MEMORY: "10"
-      WEB_PASSWORD: ${WEB_PASSWORD:-changeme}
+      # Required to enable the web dashboard. If unset or weak, the dashboard
+      # refuses to start (the bot still runs). Set a strong value in your .env.
+      WEB_PASSWORD: ${WEB_PASSWORD:-}
       DEBUG: "false"
 
     # For direct path method: mount your Plex music folder read-only

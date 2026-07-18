@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const plex = require('../src/plex');
 const logger = require('../src/utils/logger');
+const { resolveWebAuth } = require('../src/webAuth');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -19,7 +20,10 @@ function serverError(res, label) {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
-const WEB_PASSWORD = process.env.WEB_PASSWORD || '';
+// Set by startWebServer once the password has passed resolveWebAuth().
+// The server never starts unless a strong password is configured, so the
+// middlewares below can enforce auth unconditionally.
+let webPassword = '';
 const sessions = new Map(); // token -> expiresAt
 
 function createSession() {
@@ -39,7 +43,6 @@ function validateSession(token) {
 
 // Middleware: protects API routes — returns 401 JSON if not authed
 function requireAuth(req, res, next) {
-  if (!WEB_PASSWORD) return next();
   const token = req.headers['x-session-token'];
   if (validateSession(token)) return next();
   return res.status(401).json({ error: 'Unauthorized' });
@@ -47,7 +50,6 @@ function requireAuth(req, res, next) {
 
 // Middleware: protects page routes — redirects to /login if not authed
 function requireAuthPage(req, res, next) {
-  if (!WEB_PASSWORD) return next();
   const token = req.cookies?.zyntra_token;
   if (validateSession(token)) return next();
   return res.redirect('/login');
@@ -80,6 +82,13 @@ const searchLimiter = rateLimit({
 // ─── Server ───────────────────────────────────────────────────────────────────
 
 function startWebServer(client) {
+  const auth = resolveWebAuth(process.env.WEB_PASSWORD);
+  if (!auth.enabled) {
+    logger.error(`${auth.reason} Set a strong WEB_PASSWORD to enable the dashboard.`);
+    return;
+  }
+  webPassword = auth.password;
+
   const app = express();
   const port = process.env.WEB_PORT || 3333;
 
@@ -110,14 +119,12 @@ function startWebServer(client) {
 
   // ── Login API ──────────────────────────────────────────────────────────────
   app.post('/api/login', loginLimiter, (req, res) => {
-    if (!WEB_PASSWORD) return res.json({ ok: true });
-
     const { password } = req.body;
     if (typeof password !== 'string' || !password) {
       return res.status(400).json({ error: 'Missing password' });
     }
 
-    const expected = Buffer.from(WEB_PASSWORD);
+    const expected = Buffer.from(webPassword);
     const given = Buffer.from(password.slice(0, 256));
     const match = expected.length === given.length &&
       crypto.timingSafeEqual(expected, given);
@@ -255,9 +262,6 @@ function startWebServer(client) {
 
   app.listen(port, '0.0.0.0', () => {
     logger.info(`Web dashboard running at http://0.0.0.0:${port}`);
-    if (!WEB_PASSWORD) {
-      logger.warn('WEB_PASSWORD is not set — dashboard is unprotected.');
-    }
   });
 }
 

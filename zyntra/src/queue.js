@@ -12,6 +12,7 @@ const plex = require('./plex');
 const logger = require('./utils/logger');
 const { saveState, clearGuildState } = require('./persistence');
 const { resolveAnnounceChannel } = require('./announce');
+const { buildNowPlayingEmbed } = require('./nowPlaying');
 const db = require('./database');
 
 // How many tracks back to remember for anti-duplicate checks
@@ -333,21 +334,10 @@ class GuildQueue {
   }
 
   _nowPlayingEmbed(track) {
-    const duration = track.duration
-      ? Math.floor(track.duration / 60) + ':' + String(track.duration % 60).padStart(2, '0')
-      : 'Unknown';
-    return {
-      color: 0xe5a00d,
-      title: 'Now Playing',
-      description: '**' + track.title + '**',
-      fields: [
-        { name: 'Artist', value: track.artist, inline: true },
-        { name: 'Album', value: track.album, inline: true },
-        { name: 'Duration', value: duration, inline: true },
-      ],
-      thumbnail: track.thumb ? { url: plex.getAuthenticatedThumbUrl(track.thumb) } : undefined,
-      footer: { text: '👍 React to vote into the community playlist  •  Queue: ' + this.tracks.length + ' track(s) remaining' },
-    };
+    return buildNowPlayingEmbed(
+      track,
+      '👍 React to vote into the community playlist  •  Queue: ' + this.tracks.length + ' track(s) remaining'
+    );
   }
 }
 

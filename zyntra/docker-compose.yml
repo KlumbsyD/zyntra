@@ -24,7 +24,9 @@ services:
       DEFAULT_VOLUME: "0.5"
       WEB_PORT: "3333"
       STATE_DIR: "/data"
-      WEB_PASSWORD: ${WEB_PASSWORD:-changeme}
+      # Required to enable the web dashboard. If unset or weak, the dashboard
+      # refuses to start (the bot still runs). Set a strong value in your .env.
+      WEB_PASSWORD: ${WEB_PASSWORD:-}
       ANTI_DUPLICATE: "true"
       ANTI_DUPLICATE_MEMORY: "10"
       COMMUNITY_PLAYLIST_THRESHOLD: ${COMMUNITY_PLAYLIST_THRESHOLD:-3}
