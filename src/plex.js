@@ -143,16 +143,6 @@ class PlexClient {
     };
   }
 
-  /**
-   * Returns the full authenticated thumb URL for server-side use only (e.g. Discord embeds).
-   * Never send this URL to web clients.
-   */
-  getAuthenticatedThumbUrl(thumbPath) {
-    if (!thumbPath) return null;
-    const token = this.authMethod === 'oauth' ? this.oauthToken : this.token;
-    return `${this.baseUrl}${thumbPath}?X-Plex-Token=${token}`;
-  }
-
   async _getFirstMusicLibraryKey() {
     const libs = await this.getMusicLibraries();
     if (!libs.length) throw new Error('No music libraries found in Plex');

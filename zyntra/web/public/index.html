@@ -134,6 +134,13 @@
   }
   .loop-btn.active { border-color: var(--plex); color: var(--plex); }
 
+  .qi-info { flex: 1; min-width: 0; }
+  .qi-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-title { font-weight: 500; }
+  .result-dur { color: var(--muted); font-size: 0.75rem; }
+  .muted-note, .queue-empty { color: var(--muted); font-size: 0.85rem; }
+  .queue-empty { padding: 8px 10px; }
+
   @media (max-width: 768px) {
     .grid { grid-template-columns: 1fr; }
   }
@@ -209,6 +216,7 @@
   </div>
 </main>
 
+<script src="render.js"></script>
 <script>
 let currentGuildId = null;
 let isPaused = false;
@@ -261,19 +269,7 @@ function renderGuild(guild) {
   // Queue
   const qList = document.getElementById('queue-list');
   document.getElementById('queue-count').textContent = guild.queue.length;
-  if (!guild.queue.length) {
-    qList.innerHTML = '<li style="color:var(--muted);font-size:.85rem;padding:8px 10px">No upcoming tracks</li>';
-    return;
-  }
-  qList.innerHTML = guild.queue.slice(0, 30).map((t, i) => `
-    <li class="queue-item">
-      <span class="qi-num">${i + 1}</span>
-      <div style="flex:1;min-width:0">
-        <div class="qi-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-        <div class="qi-artist">${esc(t.artist)}</div>
-      </div>
-      <span class="qi-dur">${fmtDur(t.duration)}</span>
-    </li>`).join('');
+  ZyntraRender.renderQueue(qList, guild.queue);
 }
 
 async function api(action, body) {
@@ -308,18 +304,7 @@ async function doSearch() {
   try {
     const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
     const results = await res.json();
-    if (!results.length) {
-      document.getElementById('search-results').innerHTML = '<div style="color:var(--muted);font-size:.85rem">No results found.</div>';
-      return;
-    }
-    document.getElementById('search-results').innerHTML = results.map((t, i) => `
-      <div class="result-item" onclick="addToQueue('${esc(JSON.stringify(t).replace(/'/g,"&apos;"))}')">
-        <div>
-          <div style="font-weight:500">${esc(t.title)}</div>
-          <div class="result-meta">${esc(t.artist)} • ${esc(t.album)}</div>
-        </div>
-        <span style="color:var(--muted);font-size:.75rem">${fmtDur(t.duration)}</span>
-      </div>`).join('');
+    ZyntraRender.renderSearchResults(document.getElementById('search-results'), results, addToQueue);
   } catch {
     document.getElementById('search-results').innerHTML = '<div style="color:var(--red);font-size:.85rem">Search failed.</div>';
   }
@@ -328,31 +313,17 @@ async function doSearch() {
 async function loadPlaylists() {
   const res = await fetch('/api/playlists');
   const playlists = await res.json();
-  const el = document.getElementById('playlists-list');
-  if (!playlists.length) { el.innerHTML = '<span style="color:var(--muted);font-size:.85rem">No playlists found</span>'; return; }
-  el.innerHTML = playlists.map(p =>
-    `<div class="chip" onclick="playPlaylist('${esc(p.key)}','${esc(p.title)}')">${esc(p.title)} <span style="color:var(--muted)">(${p.count})</span></div>`
-  ).join('');
+  ZyntraRender.renderPlaylists(document.getElementById('playlists-list'), playlists, playPlaylist);
 }
 
-async function addToQueue(trackJson) {
+async function addToQueue(t) {
   // This queues a track via the bot — for now just shows an alert with the command
-  const t = JSON.parse(trackJson.replace(/&apos;/g, "'"));
   alert(`To queue this track in Discord, type:\n!play ${t.title}\nor\n/play ${t.title}`);
 }
 
 async function playPlaylist(key, title) {
   alert(`To play this playlist in Discord, type:\n!playlist ${title}\nor\n/playlist ${title}`);
 }
-
-function fmtDur(sec) {
-  if (!sec) return '?:??';
-  return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
-}
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 
 // Token auth — extract from URL hash if present, otherwise use sessionStorage
 let _zyntraToken = '';
